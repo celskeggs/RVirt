@@ -26,6 +26,7 @@ mod pfault;
 mod plic;
 mod pmap;
 mod pmp;
+mod pmptest;
 mod sum;
 mod trap;
 mod virtio;
@@ -33,6 +34,7 @@ mod virtio;
 use fdt::*;
 use trap::constants::*;
 use pmap::{boot_page_table_pa, pa2va};
+use pmptest::pmptest_mstart;
 
 /* mandatory rust environment setup */
 
@@ -101,6 +103,8 @@ use pmap::{boot_page_table_pa, pa2va};
  *  0xffffffffc0000000 - 0xffffffffffffffff   0x80000000 - 0xC0000000   RWX    hypervisor memory
  */
 
+const TEST_PMP: bool = false;
+
 #[naked]
 #[no_mangle]
 #[link_section = ".text.entrypoint"]
@@ -114,7 +118,11 @@ unsafe fn _start() {
 
     let hartid = reg!(a0);
     let device_tree_blob = reg!(a1);
-    mstart(hartid, device_tree_blob);
+    if TEST_PMP {
+        pmptest_mstart(hartid, device_tree_blob);
+    } else {
+        mstart(hartid, device_tree_blob);
+    }
 }
 
 #[link_section = ".text.init"]
